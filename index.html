@@ -36,30 +36,12 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .form-hidden{display:none}
 .sep{height:1px;background:var(--border);margin:16px 0}
 .forgot{font-size:12px;color:var(--txt3);text-align:center;margin-top:10px;cursor:pointer}
-/* footer contact */
-<footer style="margin-top:2rem;font-size:12px;color:var(--txt3);text-align:center;width:100%">
-  <a href="#" onclick="openModal('legal-modal')" style="color:inherit;text-decoration:none">Mentions légales & CGU</a> | 
-  <a href="#" onclick="openModal('contact-modal')" style="color:inherit;text-decoration:none">Contact</a>
-</footer>
-<div id="legal-modal" class="modal h" onclick="closeModalOv(event, 'legal-modal')">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal('legal-modal')">&times;</span>
-    <h2 style="font-family:Syne">Mentions Légales & CGU</h2>
-    <div style="margin-top:1rem; color:var(--txt2); font-size:14px; line-height:1.6; max-height:300px; overflow-y:auto">
-      <p>Éditeur : [Ton Nom/Entreprise]</p>
-      <p>Hébergement : Supabase / Vercel</p>
-      <p>CGU : Les points de fidélité n'ont pas de valeur marchande...</p>
-    </div>
-  </div>
-</div>
-
-<div id="contact-modal" class="modal h" onclick="closeModalOv(event, 'contact-modal')">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal('contact-modal')">&times;</span>
-    <h2 style="font-family:Syne">Contact</h2>
-    <p style="margin-top:1rem; color:var(--txt2)">Email : support@loyaltyos.fr</p>
-  </div>
-</div>
+/* Modals Mentions & Contact */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 1; transition: opacity 0.2s; }
+.modal.h { opacity: 0; pointer-events: none; }
+.modal-content { background: var(--bg2); padding: 2rem; border-radius: var(--r); max-width: 500px; width: 100%; position: relative; border: 1px solid var(--border2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.close { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: var(--txt3); transition: color 0.2s; }
+.close:hover { color: var(--txt); }
 /* Admin secret dot */
 .admin-dot{position:fixed;bottom:12px;right:12px;width:12px;height:12px;border-radius:50%;background:var(--accent);opacity:.08;cursor:pointer;transition:opacity .3s}
 .admin-dot:hover{opacity:.4}
@@ -126,6 +108,32 @@ const SB_URL='https://qqcfmbpixdeiczobqnqa.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2ZtYnBpeGRlaWN6b2JxbnFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjMxMDMsImV4cCI6MjA5MDM5OTEwM30.qTQvfalYS-V39M37BJdMQbXeMJBJTuzM44RMzoqmW5I';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
+<footer style="margin-top:2rem;font-size:12px;color:var(--txt3);text-align:center;width:100%">
+  <a href="#" onclick="openModal('legal-modal'); return false;" style="color:inherit;text-decoration:none">Mentions légales & CGU</a> | 
+  <a href="#" onclick="openModal('contact-modal'); return false;" style="color:inherit;text-decoration:none">Contact</a>
+</footer>
+
+<div id="legal-modal" class="modal h" onclick="closeModalOv(event, 'legal-modal')">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('legal-modal')">&times;</span>
+    <h2 style="font-family:'Syne', sans-serif; margin-bottom: 1rem;">Mentions Légales & CGU</h2>
+    <div style="color:var(--txt2); font-size:13px; line-height:1.6; max-height:400px; overflow-y:auto; padding-right: 10px;">
+      <p><strong>Éditeur du site :</strong><br>[Ton Nom ou Nom de l'entreprise]<br>[Ton Adresse]<br>[Ton SIRET si applicable]</p>
+      <br>
+      <p><strong>Hébergement :</strong><br>Supabase Inc. / Vercel</p>
+      <br>
+      <p><strong>Conditions d'utilisation :</strong><br>Le système de fidélité LoyaltyOS est fourni à titre indicatif. Les points cumulés n'ont aucune valeur monétaire et ne peuvent être échangés contre de l'argent. Le commerçant se réserve le droit de modifier ou d'annuler son programme de fidélité à tout moment.</p>
+    </div>
+  </div>
+</div>
+
+<div id="contact-modal" class="modal h" onclick="closeModalOv(event, 'contact-modal')">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('contact-modal')">&times;</span>
+    <h2 style="font-family:'Syne', sans-serif; margin-bottom: 1rem;">Contactez-nous</h2>
+    <p style="color:var(--txt2); font-size:14px;">Une question ? Un problème avec votre compte ?<br><br>📧 Email : <strong>support@loyaltyos.fr</strong></p>
+  </div>
+</div>
 // Check for QR code join param
 const _qrParam=new URLSearchParams(window.location.search).get('m');
 // If already logged in, redirect — but preserve QR join param
@@ -244,6 +252,10 @@ async function merchantLogin(){
 function showMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
 function hideMsg(id){document.getElementById(id).style.display='none';}
 function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast on'+(type?' '+type:'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3000);}
+// Modal Functions
+function openModal(id){ document.getElementById(id).classList.remove('h'); }
+function closeModal(id){ document.getElementById(id).classList.add('h'); }
+function closeModalOv(e,id){ if(e.target === e.currentTarget) closeModal(id); }
 </script>
 </body>
 </html>
