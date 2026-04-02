@@ -425,7 +425,7 @@ async function loadCardSettings(){
 
 async function renderAll(){
   const[r1,r2,r3]=await Promise.all([
-    sb.from('clients').select('*').eq('merchant_id',mid).order('created_at',{ascending:false}),
+    sb.from('clients').select('*').eq('merchant_id',mid).order('join_date',{ascending:false}),
     sb.from('transactions').select('*').eq('merchant_id',mid).order('created_at',{ascending:false}),
     sb.from('rewards').select('*').eq('merchant_id',mid)
   ]);
