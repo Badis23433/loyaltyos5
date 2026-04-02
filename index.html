@@ -36,6 +36,30 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .form-hidden{display:none}
 .sep{height:1px;background:var(--border);margin:16px 0}
 .forgot{font-size:12px;color:var(--txt3);text-align:center;margin-top:10px;cursor:pointer}
+/* footer contact */
+<footer style="margin-top:2rem;font-size:12px;color:var(--txt3);text-align:center;width:100%">
+  <a href="#" onclick="openModal('legal-modal')" style="color:inherit;text-decoration:none">Mentions légales & CGU</a> | 
+  <a href="#" onclick="openModal('contact-modal')" style="color:inherit;text-decoration:none">Contact</a>
+</footer>
+<div id="legal-modal" class="modal h" onclick="closeModalOv(event, 'legal-modal')">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('legal-modal')">&times;</span>
+    <h2 style="font-family:Syne">Mentions Légales & CGU</h2>
+    <div style="margin-top:1rem; color:var(--txt2); font-size:14px; line-height:1.6; max-height:300px; overflow-y:auto">
+      <p>Éditeur : [Ton Nom/Entreprise]</p>
+      <p>Hébergement : Supabase / Vercel</p>
+      <p>CGU : Les points de fidélité n'ont pas de valeur marchande...</p>
+    </div>
+  </div>
+</div>
+
+<div id="contact-modal" class="modal h" onclick="closeModalOv(event, 'contact-modal')">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('contact-modal')">&times;</span>
+    <h2 style="font-family:Syne">Contact</h2>
+    <p style="margin-top:1rem; color:var(--txt2)">Email : support@loyaltyos.fr</p>
+  </div>
+</div>
 /* Admin secret dot */
 .admin-dot{position:fixed;bottom:12px;right:12px;width:12px;height:12px;border-radius:50%;background:var(--accent);opacity:.08;cursor:pointer;transition:opacity .3s}
 .admin-dot:hover{opacity:.4}
