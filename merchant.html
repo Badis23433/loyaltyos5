@@ -560,7 +560,7 @@ async function publishCard(){
 }
 function generateQR(){
   const el=document.getElementById('qr-c');el.innerHTML='';
-  const url=`https://loyaltyos1.vercel.app/index.html?m=${encodeURIComponent(mid)}`;
+  const url=`https://loyaltyos5.vercel.app/index.html?m=${encodeURIComponent(mid)}`;
   document.getElementById('qr-link').textContent=url;
   try{new QRCode(el,{text:url,width:140,height:140,colorDark:'#1a1a18',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}
   catch(e){el.innerHTML='<div style="width:140px;height:140px;background:var(--bg2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--txt3)">QR code</div>';}
