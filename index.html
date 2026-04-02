@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LoyaltyOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0D0D0F;--bg2:#161618;--bg3:#1E1E21;--txt:#F0F0EE;--txt2:#9A9A98;--txt3:#505050;--accent:#6C63FF;--accent2:#9F9BFF;--green:#2DD4A0;--green-bg:rgba(45,212,160,0.1);--red:#FF5C5C;--red-bg:rgba(255,92,92,0.1);--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);--r:14px;--rm:8px}
+html,body{min-height:100vh;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg)}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 20px 60px;min-height:100vh}
+.logo{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:-0.02em;text-align:center;margin-bottom:6px;cursor:pointer;text-decoration:none;color:inherit}
+.logo span{color:var(--accent)}
+.tagline{color:var(--txt2);font-size:14px;text-align:center;margin-bottom:32px}
+.portals{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:760px}
+@media(max-width:600px){.portals{grid-template-columns:1fr}}
+.portal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;display:flex;flex-direction:column}
+.portal-icon{font-size:28px;margin-bottom:10px}
+.portal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px}
+.portal-sub{font-size:12px;color:var(--txt2);margin-bottom:1.25rem;line-height:1.5}
+.tabs{display:flex;background:var(--bg3);border-radius:var(--rm);padding:3px;margin-bottom:1rem}
+.tab-btn{flex:1;padding:9px 8px;border-radius:6px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .2s}
+.tab-btn.on{background:var(--bg2);color:var(--txt)}
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.form-input{width:100%;padding:13px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rm);font-size:16px;color:var(--txt);font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--txt3)}
+.btn-primary{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--rm);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:.03em;min-height:50px;transition:opacity .2s}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.err-msg{background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:10px 12px;border-radius:var(--rm);font-size:12px;margin-bottom:12px;display:none;line-height:1.4}
+.suc-msg{background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:10px 12px;border-radius:var(--rm);font-size:12px;margin-bottom:12px;display:none;line-height:1.4}
+.form-hidden{display:none}
+.sep{height:1px;background:var(--border);margin:16px 0}
+/* Admin secret dot */
+.admin-dot{position:fixed;bottom:14px;right:14px;width:10px;height:10px;border-radius:50%;background:var(--accent2);opacity:.06;cursor:pointer;transition:opacity .3s;z-index:10}
+.admin-dot:hover{opacity:.35}
+/* Footer */
+footer{position:fixed;bottom:0;left:0;right:0;text-align:center;padding:10px;font-size:11px;color:var(--txt3);background:var(--bg)}
+footer a{color:var(--txt3);text-decoration:none;margin:0 10px}
+footer a:hover{color:var(--txt2)}
+/* Modals */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:999;padding:0}
+.modal-overlay.h{display:none}
+.modal-sheet{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;padding:1.5rem}
+.modal-sheet h2{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
+.modal-sheet p,.modal-sheet li{font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:8px}
+.modal-sheet h3{font-size:14px;font-weight:700;margin:1rem 0 6px;color:var(--txt)}
+.modal-sheet ul{padding-left:1.2rem;margin-bottom:10px}
+.modal-close{background:none;border:none;color:var(--txt2);font-size:24px;cursor:pointer;line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+.modal-badge{font-size:10px;background:rgba(108,99,255,.2);color:var(--accent2);padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.06em}
+/* Toast */
+.toast{position:fixed;bottom:48px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg2);border:1px solid var(--border2);color:var(--txt);padding:11px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+<a class="logo" href="index.html">loyalty<span>OS</span></a>
+<p class="tagline">La plateforme de fidélité dématérialisée</p>
+
+<div class="portals">
+  <!-- CLIENT -->
+  <div class="portal">
+    <div class="portal-icon">👤</div>
+    <div class="portal-title">Espace Client</div>
+    <div class="portal-sub">Accédez à vos cartes de fidélité ou créez un compte</div>
+    <div class="tabs">
+      <button class="tab-btn on" onclick="clientTab('login')">Connexion</button>
+      <button class="tab-btn" onclick="clientTab('register')">Inscription</button>
+    </div>
+    <div class="err-msg" id="c-err"></div>
+    <div class="suc-msg" id="c-suc"></div>
+    <div id="c-login">
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="c-email" type="email" placeholder="vous@exemple.fr" autocomplete="email" inputmode="email"></div>
+      <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" id="c-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')clientLogin()"></div>
+      <button class="btn-primary" id="c-login-btn" onclick="clientLogin()">Se connecter</button>
+    </div>
+    <div id="c-register" class="form-hidden">
+      <div class="form-group"><label class="form-label">Nom complet *</label><input class="form-input" id="r-name" type="text" placeholder="Sophie Cardin" autocomplete="name"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="r-email" type="email" placeholder="vous@exemple.fr" autocomplete="email" inputmode="email"></div>
+      <div class="form-group"><label class="form-label">Mot de passe * (min. 6 caractères)</label><input class="form-input" id="r-pass" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="r-phone" type="tel" placeholder="+33 6 00 00 00 00" inputmode="tel"></div>
+      <div class="form-group">
+        <label class="form-label">Code ou nom du commerce *</label>
+        <input class="form-input" id="r-code" type="text" placeholder="Requis — demandez-le à votre commerçant">
+        <div id="r-merchant-preview" style="margin-top:6px;font-size:12px;color:var(--green);display:none"></div>
+      </div>
+      <button class="btn-primary" id="c-reg-btn" onclick="clientRegister()">Créer mon compte</button>
+    </div>
+  </div>
+
+  <!-- MERCHANT -->
+  <div class="portal">
+    <div class="portal-icon">🏪</div>
+    <div class="portal-title">Espace Commerçant</div>
+    <div class="portal-sub">Gérez vos clients, points et récompenses depuis votre tableau de bord</div>
+    <div class="err-msg" id="m-err"></div>
+    <div class="form-group"><label class="form-label">Email professionnel</label><input class="form-input" id="m-email" type="email" placeholder="contact@moncommerce.fr" autocomplete="email" inputmode="email"></div>
+    <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" id="m-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')merchantLogin()"></div>
+    <button class="btn-primary" id="m-login-btn" onclick="merchantLogin()">Accéder au tableau de bord</button>
+    <div class="sep"></div>
+    <p style="font-size:12px;color:var(--txt3);text-align:center;line-height:1.5">Pas encore de compte ?<br>Contactez <a href="#" onclick="openModal('mo-contact')" style="color:var(--accent2);text-decoration:none">l'équipe LoyaltyOS</a>.</p>
+  </div>
+</div>
+
+<!-- MODAL CGU -->
+<div class="modal-overlay h" id="mo-cgu" onclick="closeModalOv(event,'mo-cgu')">
+  <div class="modal-sheet">
+    <h2><span>Conditions d'utilisation <span class="modal-badge">CGU</span></span><button class="modal-close" onclick="closeModal('mo-cgu')">×</button></h2>
+    <p style="color:var(--txt);font-weight:500">Dernière mise à jour : à compléter</p>
+    <h3>1. Objet</h3>
+    <p>Les présentes conditions régissent l'utilisation du service LoyaltyOS, plateforme de fidélité dématérialisée.</p>
+    <h3>2. Accès au service</h3>
+    <p>L'accès au service est réservé aux commerçants disposant d'un compte actif et à leurs clients. Toute utilisation frauduleuse est interdite.</p>
+    <h3>3. Données personnelles</h3>
+    <p>LoyaltyOS collecte les données nécessaires au fonctionnement du programme de fidélité (nom, email, téléphone, historique de points). Ces données sont conservées pour la durée du contrat et supprimées sur demande conformément au RGPD.</p>
+    <h3>4. Responsabilité</h3>
+    <p>LoyaltyOS est fourni en l'état. L'éditeur ne saurait être tenu responsable des interruptions de service ou pertes de données indépendantes de sa volonté.</p>
+    <h3>5. Contact</h3>
+    <p>Pour toute question : voir section Contact.</p>
+    <p style="margin-top:16px;font-style:italic;color:var(--txt3)">— Ce texte est un modèle à compléter par un professionnel juridique.</p>
+  </div>
+</div>
+
+<!-- MODAL CONTACT -->
+<div class="modal-overlay h" id="mo-contact" onclick="closeModalOv(event,'mo-contact')">
+  <div class="modal-sheet">
+    <h2><span>Nous contacter</span><button class="modal-close" onclick="closeModal('mo-contact')">×</button></h2>
+    <h3>LoyaltyOS</h3>
+    <p>Pour toute demande de compte commerçant, question technique ou signalement :</p>
+    <p style="color:var(--txt)">📧 <strong>Email :</strong> à compléter</p>
+    <p style="color:var(--txt)">🌐 <strong>Site :</strong> loyaltyos1.vercel.app</p>
+    <p style="color:var(--txt)">📞 <strong>Téléphone :</strong> à compléter</p>
+    <div style="margin-top:1rem;background:var(--bg3);border-radius:var(--rm);padding:1rem">
+      <p style="font-size:12px;color:var(--txt2)">Horaires de support : à compléter<br>Délai de réponse moyen : à compléter</p>
+    </div>
+  </div>
+</div>
+
+<div class="admin-dot" onclick="window.location.href='admin.html'" title=""></div>
+
+<footer>
+  <a href="#" onclick="openModal('mo-cgu')">Conditions d'utilisation</a>
+  <span style="color:var(--txt3)">·</span>
+  <a href="#" onclick="openModal('mo-contact')">Contact</a>
+  <span style="color:var(--txt3)">·</span>
+  <span>© 2025 LoyaltyOS</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://qqcfmbpixdeiczobqnqa.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2ZtYnBpeGRlaWN6b2JxbnFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjMxMDMsImV4cCI6MjA5MDM5OTEwM30.qTQvfalYS-V39M37BJdMQbXeMJBJTuzM44RMzoqmW5I';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+// Redirect if already logged in
+const cs=sessionStorage.getItem('los_client_sess');
+const ms=sessionStorage.getItem('los_merchant_sess');
+if(cs)window.location.href='client.html';
+if(ms)window.location.href='merchant.html';
+
+// Pre-fill merchant code from QR scan URL param (?m=MERCHANT_ID)
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const m=params.get('m');
+  if(m){
+    clientTab('register');
+    document.getElementById('r-code').value=m;
+    previewMerchant(m);
+  }
+})();
+
+function clientTab(mode){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('on',i===(mode==='login'?0:1)));
+  document.getElementById('c-login').style.display=mode==='login'?'block':'none';
+  document.getElementById('c-register').style.display=mode==='register'?'block':'none';
+  hideMsg('c-err');hideMsg('c-suc');
+}
+
+// Preview merchant when code changes
+let previewTimer=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  const codeInput=document.getElementById('r-code');
+  if(codeInput)codeInput.addEventListener('input',function(){
+    clearTimeout(previewTimer);
+    previewTimer=setTimeout(()=>previewMerchant(this.value.trim()),600);
+  });
+});
+async function previewMerchant(q){
+  const prev=document.getElementById('r-merchant-preview');
+  if(!q||q.length<2){prev.style.display='none';return;}
+  // Try by UUID first (QR code), then by name
+  let m=null;
+  if(q.length===36){
+    const{data}=await sb.from('merchants').select('id,shop_name').eq('id',q).eq('active',true).maybeSingle();
+    m=data;
+  }
+  if(!m){
+    const{data}=await sb.from('merchants').select('id,shop_name').ilike('shop_name','%'+q+'%').eq('active',true).limit(1);
+    if(data&&data.length>0)m=data[0];
+  }
+  if(m){prev.textContent='✓ Commerce trouvé : '+m.shop_name;prev.style.display='block';prev.style.color='var(--green)';}
+  else{prev.textContent='Aucun commerce trouvé pour ce code.';prev.style.display='block';prev.style.color='var(--red)';}
+}
+
+async function clientLogin(){
+  const email=document.getElementById('c-email').value.trim().toLowerCase();
+  const pass=document.getElementById('c-pass').value;
+  hideMsg('c-err');
+  if(!email||!pass){showMsg('c-err','Remplissez email et mot de passe.');return;}
+  const btn=document.getElementById('c-login-btn');btn.disabled=true;btn.textContent='Connexion...';
+  try{
+    const{data,error}=await sb.from('clients').select('id,name,merchant_id,active').eq('email',email).eq('pass',pass);
+    if(error||!data||data.length===0){showMsg('c-err','Email ou mot de passe incorrect.');btn.disabled=false;btn.textContent='Se connecter';return;}
+    // Check if any card is active
+    const activeCds=data.filter(c=>c.active!==false);
+    if(!activeCds.length){showMsg('c-err','Votre compte a été suspendu. Contactez votre commerçant.');btn.disabled=false;btn.textContent='Se connecter';return;}
+    sessionStorage.setItem('los_client_sess',JSON.stringify({email,pass,cards:activeCds.map(c=>c.id),currentCard:activeCds[0].id,name:activeCds[0].name}));
+    window.location.href='client.html';
+  }catch(e){showMsg('c-err','Erreur de connexion. Réessayez.');btn.disabled=false;btn.textContent='Se connecter';}
+}
+
+async function clientRegister(){
+  const name=document.getElementById('r-name').value.trim();
+  const email=document.getElementById('r-email').value.trim().toLowerCase();
+  const pass=document.getElementById('r-pass').value;
+  const phone=document.getElementById('r-phone').value.trim();
+  const code=document.getElementById('r-code').value.trim();
+  hideMsg('c-err');hideMsg('c-suc');
+  if(!name||!email||!pass){showMsg('c-err','Nom, email et mot de passe sont obligatoires.');return;}
+  if(pass.length<6){showMsg('c-err','Le mot de passe doit faire au moins 6 caractères.');return;}
+  if(!code){showMsg('c-err','Le code du commerce est obligatoire. Demandez-le à votre commerçant.');return;}
+  const btn=document.getElementById('c-reg-btn');btn.disabled=true;btn.textContent='Création...';
+  try{
+    // Resolve merchant by ID or name
+    let merchantId=null;
+    if(code.length===36){
+      const{data:m}=await sb.from('merchants').select('id').eq('id',code).eq('active',true).maybeSingle();
+      if(m)merchantId=m.id;
+    }
+    if(!merchantId){
+      const{data:m}=await sb.from('merchants').select('id').ilike('shop_name','%'+code+'%').eq('active',true).limit(1);
+      if(m&&m.length>0)merchantId=m[0].id;
+    }
+    if(!merchantId){showMsg('c-err','Commerce introuvable. Vérifiez le code fourni par votre commerçant.');btn.disabled=false;btn.textContent='Créer mon compte';return;}
+    // Check duplicate: same email + same merchant
+    const{data:exist}=await sb.from('clients').select('id').eq('email',email).eq('merchant_id',merchantId).maybeSingle();
+    if(exist){showMsg('c-err','Vous avez déjà un compte pour ce commerce. Connectez-vous.');btn.disabled=false;btn.textContent='Créer mon compte';return;}
+    // Create
+    const{data:newC,error}=await sb.from('clients').insert({merchant_id:merchantId,name,email,pass,phone,points:0,tier:'Silver',wallet:[],visits:0,total_points_earned:0,active:true}).select('id,name').maybeSingle();
+    if(error){showMsg('c-err','Erreur: '+error.message);btn.disabled=false;btn.textContent='Créer mon compte';return;}
+    showMsg('c-suc','Compte créé ! Redirection...');
+    setTimeout(()=>{
+      sessionStorage.setItem('los_client_sess',JSON.stringify({email,pass,cards:[newC.id],currentCard:newC.id,name:newC.name}));
+      window.location.href='client.html';
+    },1200);
+  }catch(e){showMsg('c-err','Erreur: '+e.message);btn.disabled=false;btn.textContent='Créer mon compte';}
+}
+
+async function merchantLogin(){
+  const email=document.getElementById('m-email').value.trim().toLowerCase();
+  const pass=document.getElementById('m-pass').value;
+  hideMsg('m-err');
+  if(!email||!pass){showMsg('m-err','Remplissez email et mot de passe.');return;}
+  const btn=document.getElementById('m-login-btn');btn.disabled=true;btn.textContent='Connexion...';
+  try{
+    const{data,error}=await sb.from('merchants').select('*').eq('email',email).eq('pass',pass).maybeSingle();
+    if(error||!data){showMsg('m-err','Email ou mot de passe incorrect.');btn.disabled=false;btn.textContent='Accéder au tableau de bord';return;}
+    if(!data.active){showMsg('m-err','Compte suspendu. Contactez LoyaltyOS.');btn.disabled=false;btn.textContent='Accéder au tableau de bord';return;}
+    sessionStorage.setItem('los_merchant_sess',JSON.stringify({id:data.id,shopName:data.shop_name,email:data.email,ptsPerEuro:data.pts_per_euro||10,cardColor:data.card_color||'#1C1C1E',ptsMin:data.pts_min||1,ptsMax:data.pts_max||5000}));
+    window.location.href='merchant.html';
+  }catch(e){showMsg('m-err','Erreur de connexion. Réessayez.');btn.disabled=false;btn.textContent='Accéder au tableau de bord';}
+}
+
+// Modals
+function openModal(id){document.getElementById(id).classList.remove('h');}
+function closeModal(id){document.getElementById(id).classList.add('h');}
+function closeModalOv(e,id){if(e.target===e.currentTarget)closeModal(id);}
+function showMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function hideMsg(id){document.getElementById(id).style.display='none';}
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast on'+(type?' '+type:'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3000);}
+</script>
+</body>
+</html>

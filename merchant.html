@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LoyaltyOS — Commerçant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:#1A56E8;--accent-bg:#EBF0FD;--accent-txt:#1A3A9E;--gold:#C9933A;--gold-bg:#FDF3E3;--gold-txt:#8B6420;--green:#1A6B35;--green-bg:#E8F5EC;--red:#9B2121;--red-bg:#FDECEC;--bg:#fff;--bg2:#F7F7F5;--bg3:#EFEFED;--txt:#1A1A18;--txt2:#6B6B68;--txt3:#A0A09D;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--r:12px;--rm:8px}
+@media(prefers-color-scheme:dark){:root{--bg:#18181A;--bg2:#222224;--bg3:#2A2A2C;--txt:#F0F0EE;--txt2:#9A9A98;--txt3:#606060;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent-bg:#1A2A4A;--accent-txt:#7EB3FF;--gold-bg:#2A1F08;--gold-txt:#E8B96A;--green-bg:#0D2218;--red-bg:#2A0D0D}}
+html,body{height:100%;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg3)}
+#app{height:100%;display:flex;flex-direction:column}
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:.5px solid var(--border);background:var(--bg);flex-shrink:0;gap:10px;position:sticky;top:0;z-index:100}
+.nlogo{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;flex-shrink:0}.nlogo span{color:var(--accent)}
+.ntabs{display:flex;gap:2px;background:var(--bg2);border-radius:var(--rm);padding:3px;overflow-x:auto;scrollbar-width:none}
+.ntabs::-webkit-scrollbar{display:none}
+.ntab{font-size:12px;padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500;color:var(--txt2);border:none;background:transparent;font-family:'Inter',sans-serif;white-space:nowrap;min-height:36px}
+.ntab.on{background:var(--bg);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.nright{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.shop-badge{display:flex;align-items:center;gap:6px;padding:6px 10px;border:.5px solid var(--border);border-radius:var(--rm);font-size:12px;font-weight:500}
+.lbtn{padding:6px 12px;border:.5px solid var(--border);border-radius:var(--rm);font-size:12px;cursor:pointer;background:none;color:var(--txt2);font-family:'Inter',sans-serif;min-height:36px}
+.main{flex:1;overflow-y:auto}
+.panel{display:none;padding:1.25rem;max-width:1100px;margin:0 auto}.panel.on{display:block}
+/* KPI */
+.kg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.25rem}
+.kc{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);padding:1rem}
+.kl{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kv{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;line-height:1}
+.kac{border-left:3px solid var(--accent)}
+.kd{display:inline-flex;align-items:center;font-size:11px;margin-top:5px;padding:2px 7px;border-radius:20px}
+.ku{background:var(--green-bg);color:var(--green)}
+/* MOTIVE */
+.motive{background:var(--accent);border-radius:var(--r);padding:1.25rem;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;gap:12px}
+.motive h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px}
+.motive p{font-size:12px;opacity:.85;line-height:1.5;max-width:340px}
+.msr{display:flex;gap:8px;flex-shrink:0}
+.ms{background:rgba(255,255,255,.15);border-radius:var(--rm);padding:8px 14px;text-align:center}
+.msv{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.msl{font-size:10px;opacity:.8;margin-top:2px}
+/* CARDS */
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
+.ctitle{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:1rem}
+.twocol{display:grid;grid-template-columns:1fr 300px;gap:10px;margin-bottom:1.25rem}
+/* CHART */
+.bars{display:flex;align-items:flex-end;gap:5px;height:110px}
+.bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent-bg);min-height:4px;cursor:pointer}
+.bar:hover,.bar.cur{background:var(--accent)}
+.bl{font-size:10px;color:var(--txt3)}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;padding:7px 10px;border-bottom:.5px solid var(--border)}
+.tbl td{padding:11px 10px;border-bottom:.5px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--bg2)}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;background:var(--accent-bg);color:var(--accent-txt)}
+.cc{display:flex;align-items:center;gap:8px}
+.tb{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500}
+.tg{background:var(--gold-bg);color:var(--gold-txt)}.ts{background:var(--bg3);color:var(--txt2)}.tp{background:#EDE8FD;color:#4A27B8}
+.wi{display:flex;gap:4px}
+.wic{width:22px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.wa{background:#111;color:#fff}.ws{background:#1428A0;color:#fff}
+.pb{width:60px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.pbf{height:100%;border-radius:2px;background:var(--gold)}
+.ab{padding:6px 12px;border:.5px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:36px}
+.ab:hover{background:var(--bg2)}
+.ab.r{color:var(--red);border-color:var(--red-bg)}.ab.r:hover{background:var(--red-bg)}
+/* FORM */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fl{font-size:11px;color:var(--txt2)}
+.fi{padding:11px 12px;border:.5px solid var(--border2);border-radius:var(--rm);font-size:16px;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;outline:none;width:100%;-webkit-appearance:none}
+.fi:focus{border-color:var(--accent)}
+select.fi option{background:var(--bg);color:var(--txt)}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.pt{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.cbtn{padding:10px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--rm);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;min-height:44px}
+.cbtn:disabled{opacity:.5;cursor:not-allowed}
+.sbtn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--rm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;min-height:50px}
+.sbtn:hover{opacity:.9}.sbtn.gold{background:var(--gold)}
+/* WALLET PREVIEW */
+.wprv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.wpc{border-radius:16px;padding:1.25rem;min-height:160px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}
+.wpa{background:#1C1C1E;color:#fff}.wpsa{background:#1428A0;color:#fff}
+.wpb{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.wpp{font-family:'Syne',sans-serif;font-size:26px;font-weight:700}
+.wpbg{font-size:9px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.2);display:inline-block}
+.cs-w{width:24px;height:24px;border-radius:50%;cursor:pointer;flex-shrink:0}
+.cs-w.on{outline:2px solid var(--txt);outline-offset:2px}
+/* NOTIFS */
+.tpls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.25rem}
+.tpl{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);padding:1rem;cursor:pointer}
+.tpl:hover,.tpl.on{border-color:var(--accent)}
+.tpl.on{border-width:1.5px;background:var(--accent-bg)}
+.ti{font-size:22px;margin-bottom:8px}
+.tn{font-size:12px;font-weight:600;margin-bottom:3px}
+.td{font-size:11px;color:var(--txt2);line-height:1.4}
+.iph{background:#1C1C1E;border-radius:14px;padding:1rem;color:#fff;margin-bottom:10px}
+.iphh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.iphic{width:28px;height:28px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px}
+.ipht{font-size:13px;font-weight:600;margin-bottom:3px}
+.iphb{font-size:12px;opacity:.8;line-height:1.4}
+.audg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+.audc{padding:10px;border:.5px solid var(--border);border-radius:var(--rm);cursor:pointer;text-align:center;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.audc.on{border-color:var(--accent);border-width:1.5px;background:var(--accent-bg)}
+.audv{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--accent)}
+.audl{font-size:11px;color:var(--txt2);margin-top:2px}
+/* REWARDS */
+.rwl{display:flex;flex-direction:column;gap:8px;margin-bottom:1.25rem}
+.rwr{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--rm)}
+.rwe{font-size:20px;width:40px;height:40px;background:var(--bg2);border-radius:var(--rm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rwi{flex:1;min-width:0}
+.rwn{font-size:13px;font-weight:500;margin-bottom:2px}
+.rwm{font-size:11px;color:var(--txt2)}
+.rwtg{width:42px;height:24px;border-radius:12px;background:var(--bg3);border:.5px solid var(--border2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;min-width:42px}
+.rwtg.on{background:var(--accent);border-color:var(--accent)}
+.rwtg::after{content:'';width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.rwtg.on::after{left:20px}
+.rwp{font-size:12px;font-weight:500;color:var(--gold);min-width:70px;text-align:right}
+/* PAY BOX */
+.pay-box{background:var(--accent);border-radius:var(--r);padding:1.5rem;color:#fff;margin-bottom:1.25rem}
+.pay-box h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:6px}
+.pay-box p{font-size:12px;opacity:.85;margin-bottom:1rem}
+.pay-row{display:flex;gap:8px;align-items:center}
+.pay-inp{flex:1;padding:12px;border:none;border-radius:var(--rm);font-size:18px;font-weight:700;text-align:center;outline:none;font-family:'Syne',sans-serif;min-height:50px}
+.pay-btn{padding:12px 20px;background:#fff;color:var(--accent);border:none;border-radius:var(--rm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;min-height:50px}
+/* QR BOX */
+.qrbox{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);padding:1.5rem;text-align:center}
+/* TXN */
+.txnr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border)}
+.txnr:last-child{border-bottom:none}
+.txni{width:30px;height:30px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:500;padding:1rem}
+.ov.h{display:none}
+.mo{background:var(--bg);border:.5px solid var(--border2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+.mot{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.mc{background:none;border:none;color:var(--txt2);font-size:24px;cursor:pointer;line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+.mfoot{display:flex;gap:8px;margin-top:1rem}
+.mfoot .mbtn{flex:1;padding:13px;border-radius:var(--rm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;min-height:50px}
+.mfoot .mbtn.p{background:var(--accent);color:#fff}
+.mfoot .mbtn.s{background:var(--bg2);color:var(--txt);border:.5px solid var(--border)}
+/* NOTIF HIST */
+.nhr{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--rm);margin-bottom:6px}
+.nhi{width:34px;height:34px;border-radius:var(--rm);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+/* ST */
+.st{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.sb{font-size:12px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif}
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--txt);color:var(--bg);padding:11px 18px;border-radius:var(--rm);font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .3s;z-index:9999;pointer-events:none;max-width:320px}
+.toast.on{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--green);color:#fff}.toast.err{background:var(--red);color:#fff}
+.loading{text-align:center;padding:2rem;color:var(--txt3);font-size:13px}
+.empty{text-align:center;padding:2rem;color:var(--txt2)}
+@media(max-width:640px){.kg{grid-template-columns:repeat(2,1fr)}.twocol{grid-template-columns:1fr}.wprv{grid-template-columns:1fr}.tpls{grid-template-columns:1fr 1fr}.frow{grid-template-columns:1fr}.msr{display:none}.audg{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="nav">
+    <a class="nlogo" href="index.html" style="text-decoration:none;color:inherit">loyalty<span>OS</span></a>
+    <div class="ntabs">
+      <button class="ntab on" onclick="sw('dashboard')">Vue générale</button>
+      <button class="ntab" onclick="sw('caisse')">Caisse</button>
+      <button class="ntab" onclick="sw('wallet')">Carte Wallet</button>
+      <button class="ntab" onclick="sw('clients')">Clients</button>
+      <button class="ntab" onclick="sw('notifs')">Notifications</button>
+      <button class="ntab" onclick="sw('rewards')">Récompenses</button>
+    </div>
+    <div class="nright">
+      <div class="shop-badge">🏪 <span id="nshop">—</span></div>
+      <button class="lbtn" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </nav>
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="panel on" id="p-dashboard">
+      <div class="motive"><div><h3>Un client fidèle vaut 7× plus qu'un nouveau client</h3><p>Vos membres dépensent en moyenne 43% de plus. Lancez une campagne pour booster vos revenus.</p></div><div class="msr"><div class="ms"><div class="msv">43%</div><div class="msl">Panier +</div></div><div class="ms"><div class="msv">68%</div><div class="msl">Rétention</div></div><div class="ms"><div class="msv">×3.2</div><div class="msl">ROI</div></div></div></div>
+      <div class="kg">
+        <div class="kc kac"><div class="kl">Clients actifs</div><div class="kv" id="k-c">—</div></div>
+        <div class="kc"><div class="kl">Points distribués</div><div class="kv" id="k-p">—</div></div>
+        <div class="kc"><div class="kl">Cartes wallet</div><div class="kv" id="k-w">—</div></div>
+        <div class="kc"><div class="kl">Récompenses datas</div><div class="kv" id="k-r">—</div></div>
+      </div>
+      <div class="twocol">
+        <div class="card"><div class="ctitle">Inscriptions — 7 derniers jours</div><div class="bars" id="chart"></div></div>
+        <div class="card"><div class="ctitle">Niveaux clients</div><div id="tier-chart" style="display:flex;flex-direction:column;gap:10px"></div></div>
+      </div>
+      <div class="st"><span>Clients récents</span><button class="sb" onclick="sw('clients')">Voir tout →</button></div>
+      <div class="card" id="recent-wrap"><div class="loading">Chargement...</div></div>
+    </div>
+
+    <!-- CAISSE -->
+    <div class="panel" id="p-caisse">
+      <div class="pay-box">
+        <h3>Encaisser un paiement</h3>
+        <p>Saisissez le montant — les points sont calculés et crédités automatiquement.</p>
+        <div class="pay-row">
+          <input class="pay-inp" id="pay-amt" type="number" step="0.01" min="0.01" placeholder="0.00">
+          <span style="color:rgba(255,255,255,.7);font-size:15px">€</span>
+          <button class="pay-btn" onclick="processPay()">Encaisser →</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div>
+          <div class="st"><span>Sélectionner le client</span></div>
+          <input class="fi" id="pay-search" placeholder="Rechercher un client..." oninput="renderPaySearch()" style="margin-bottom:10px">
+          <div id="pay-clients-list"><div class="loading">Chargement...</div></div>
+        </div>
+        <div>
+          <div class="st"><span>Transactions récentes</span></div>
+          <div class="card" style="padding:.75rem;max-height:440px;overflow-y:auto" id="recent-txns"><div class="loading">Chargement...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLET -->
+    <div class="panel" id="p-wallet">
+      <div class="ph"><div class="pt">Carte de fidélité dématérialisée</div><button class="cbtn" id="publish-btn" onclick="publishCard()">Publier la carte</button></div>
+      <div style="display:grid;grid-template-columns:1fr 260px;gap:1rem">
+        <div>
+          <div class="wprv">
+            <div><div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Apple Wallet</div><div class="wpc wpa" id="prv-a"><div style="display:flex;justify-content:space-between"><span class="wpb" id="wpb-a">—</span><span class="wpbg">GOLD</span></div><div><div class="wpp" id="wpp-a">0</div><div style="font-size:10px;opacity:.7">points</div></div></div></div>
+            <div><div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Samsung Wallet</div><div class="wpc wpsa" id="prv-s"><div style="display:flex;justify-content:space-between"><span class="wpb" id="wpb-s">—</span><span class="wpbg">MEMBRE</span></div><div><div class="wpp" id="wpp-s">0</div><div style="font-size:10px;opacity:.7">points</div></div></div></div>
+          </div>
+          <div class="card">
+            <div class="ctitle">Paramètres de la carte</div>
+            <div class="frow"><div class="fg"><div class="fl">Nom du commerce</div><input class="fi" id="w-name" oninput="updatePrev()"></div><div class="fg"><div class="fl">Points par euro</div><input class="fi" id="w-pts" type="number" value="10" min="1"></div></div>
+            <div class="frow"><div class="fg"><div class="fl">Points 1ère récompense</div><input class="fi" id="w-first" type="number" value="200"></div><div class="fg"><div class="fl">Validité (mois)</div><input class="fi" id="w-valid" type="number" value="12"></div></div>
+            <div class="fg"><div class="fl">Couleur principale</div><div style="display:flex;gap:8px;margin-top:4px">
+              <div class="cs-w on" style="background:#1C1C1E" onclick="pickColor(this,'#1C1C1E')"></div>
+              <div class="cs-w" style="background:#1428A0" onclick="pickColor(this,'#1428A0')"></div>
+              <div class="cs-w" style="background:#1A56E8" onclick="pickColor(this,'#1A56E8')"></div>
+              <div class="cs-w" style="background:#1A6B35" onclick="pickColor(this,'#1A6B35')"></div>
+              <div class="cs-w" style="background:#8B2020" onclick="pickColor(this,'#8B2020')"></div>
+              <div class="cs-w" style="background:#C9933A" onclick="pickColor(this,'#C9933A')"></div>
+              <div class="cs-w" style="background:#6B3FA0" onclick="pickColor(this,'#6B3FA0')"></div>
+            </div></div>
+            <div style="display:flex;gap:16px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-height:44px"><input type="checkbox" id="chk-a" checked style="accent-color:var(--accent);width:16px;height:16px"> Apple Wallet</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-height:44px"><input type="checkbox" id="chk-s" checked style="accent-color:var(--accent);width:16px;height:16px"> Samsung Wallet</label></div>
+          </div>
+          <div class="card" style="margin-top:1rem">
+            <div class="ctitle">Limites de points par transaction</div>
+            <div class="frow"><div class="fg"><div class="fl">Points minimum par transaction</div><input class="fi" id="w-pts-min" type="number" value="1" min="0" placeholder="1"></div><div class="fg"><div class="fl">Points maximum par transaction</div><input class="fi" id="w-pts-max" type="number" value="5000" min="1" placeholder="5000"></div></div>
+            <p style="font-size:11px;color:var(--txt3);line-height:1.5">Ces limites s'appliquent lors de l'ajout de points depuis la Caisse. Le calcul automatique (montant × taux) sera plafonné à ces valeurs.</p>
+          </div>
+        </div>
+        <div class="qrbox">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">QR code d'inscription</div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:1rem">Vos clients scannent → carte installée en 10s</div>
+          <div id="qr-c" style="display:flex;justify-content:center;margin-bottom:12px"></div>
+          <div style="font-size:10px;color:var(--txt3);margin-bottom:12px;word-break:break-all" id="qr-link"></div>
+          <button class="sbtn" style="padding:12px;font-size:12px;min-height:44px" onclick="dlQR()">Télécharger le QR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="panel" id="p-clients">
+      <div class="ph"><div class="pt">Gestion des clients</div>
+        <div style="display:flex;gap:8px">
+          <button class="cbtn" style="background:var(--bg2);color:var(--txt);border:.5px solid var(--border)" onclick="exportCSV()">Export CSV</button>
+          <button class="cbtn" onclick="openAdd()">+ Nouveau client</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+        <input class="fi" placeholder="Nom, email, téléphone..." style="flex:1;min-width:160px" id="cs" oninput="renderClients()">
+        <select class="fi" style="width:140px" id="cf" onchange="renderClients()"><option value="">Tous niveaux</option><option>Silver</option><option>Gold</option><option>Platinum</option></select>
+        <select class="fi" style="width:150px" id="cw" onchange="renderClients()"><option value="">Tous wallets</option><option value="apple">Apple</option><option value="samsung">Samsung</option><option value="none">Sans wallet</option></select>
+      </div>
+      <div style="overflow-x:auto" id="clients-wrap"><div class="loading">Chargement...</div></div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="panel" id="p-notifs">
+      <div class="ph"><div class="pt">Notifications Push Wallet</div><div style="font-size:12px;color:var(--txt2)">Écran de verrouillage, sans application</div></div>
+      <div class="tpls">
+        <div class="tpl on" onclick="selTpl(this,'Offre spéciale !','Profitez de -20% ce week-end avec votre carte fidélité !')"><div class="ti">🎁</div><div class="tn">Offre promo</div><div class="td">Remise, vente flash</div></div>
+        <div class="tpl" onclick="selTpl(this,'Vos points expirent !','Vous avez des points qui expirent dans 7 jours. Venez les utiliser !')"><div class="ti">⏰</div><div class="tn">Expiration</div><div class="td">Points qui expirent</div></div>
+        <div class="tpl" onclick="selTpl(this,'Récompense disponible !','Une récompense vous attend. Venez la récupérer.')"><div class="ti">⭐</div><div class="tn">Récompense</div><div class="td">Déblocage de palier</div></div>
+        <div class="tpl" onclick="selTpl(this,'Nouveau niveau atteint !','Vous passez au niveau supérieur. Profitez de vos avantages.')"><div class="ti">🏆</div><div class="tn">Niveau</div><div class="td">Nouveau palier</div></div>
+        <div class="tpl" onclick="selTpl(this,'Vous nous manquez !','Cela fait 30 jours que vous n\'êtes pas passé. 50 pts bonus vous attendent.')"><div class="ti">💙</div><div class="tn">Inactif</div><div class="td">Réengagement</div></div>
+        <div class="tpl" onclick="selTpl(this,'Nos nouveautés !','Découvrez nos nouveaux produits de saison, réservés à nos membres.')"><div class="ti">✨</div><div class="tn">Nouveauté</div><div class="td">Annonce produit</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;margin-bottom:1rem">
+        <div>
+          <div class="fg"><div class="fl">Titre</div><input class="fi" id="n-title" value="Offre spéciale !" oninput="updNPrev()"></div>
+          <div class="fg"><div class="fl">Message</div><textarea class="fi" id="n-body" rows="3" style="resize:none" oninput="updNPrev()">Profitez de -20% ce week-end avec votre carte fidélité !</textarea></div>
+          <div class="st" style="margin-top:.5rem;margin-bottom:10px"><span>Audience</span></div>
+          <div class="audg" id="aud-grid"></div>
+          <button class="sbtn" onclick="sendNotif()">Envoyer la notification →</button>
+        </div>
+        <div>
+          <div class="st" style="margin-bottom:10px"><span>Aperçu iPhone</span></div>
+          <div class="iph"><div class="iphh"><div class="iphic">🏪</div><div style="font-size:11px;opacity:.6;flex:1" id="iph-app">Carte Fidélité</div><div style="font-size:10px;opacity:.5">À l'instant</div></div><div class="ipht" id="n-prev-t">Offre spéciale !</div><div class="iphb" id="n-prev-b">Profitez de -20% ce week-end avec votre carte fidélité !</div></div>
+          <div style="background:var(--bg2);border-radius:var(--rm);padding:10px;font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:1rem">Notification native via Apple/Samsung Wallet — sans application requise.</div>
+          <div class="fl" style="margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;font-size:10px">Historique</div>
+          <div id="n-hist"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="panel" id="p-rewards">
+      <div class="ph"><div class="pt">Récompenses</div><button class="cbtn" onclick="openRwd()">+ Nouvelle récompense</button></div>
+      <div class="kg" style="margin-bottom:1.25rem">
+        <div class="kc"><div class="kl">Actives</div><div class="kv" id="rk-a">—</div></div>
+        <div class="kc"><div class="kl">Utilisées</div><div class="kv" id="rk-u">—</div></div>
+        <div class="kc"><div class="kl">Valeur distribuée</div><div class="kv" id="rk-v">—</div></div>
+        <div class="kc"><div class="kl">Taux rachat</div><div class="kv" id="rk-r">—</div></div>
+      </div>
+      <div class="rwl" id="rewards-list"><div class="loading">Chargement...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CLIENT -->
+<div class="ov h" id="mo-c"><div class="mo">
+  <div class="mot"><span id="mc-t">Nouveau client</span><button class="mc" onclick="cm('mo-c')">×</button></div>
+  <input type="hidden" id="ce-id">
+  <div class="frow"><div class="fg"><div class="fl">Nom complet *</div><input class="fi" id="c-name" placeholder="Sophie Cardin" autocomplete="off"></div><div class="fg"><div class="fl">Email</div><input class="fi" id="c-email" type="email" placeholder="sophie@exemple.fr" autocomplete="off" inputmode="email"></div></div>
+  <div class="frow"><div class="fg"><div class="fl">Téléphone</div><input class="fi" id="c-phone" type="tel" placeholder="+33 6..." inputmode="tel"></div><div class="fg"><div class="fl">Points initiaux</div><input class="fi" id="c-pts" type="number" value="0" min="0"></div></div>
+  <div class="frow"><div class="fg"><div class="fl">Niveau</div><select class="fi" id="c-tier"><option>Silver</option><option>Gold</option><option>Platinum</option></select></div><div class="fg"><div class="fl">Mot de passe client (app)</div><input class="fi" id="c-pass" type="text" placeholder="Minimum 6 caractères" autocomplete="off"></div></div>
+  <div class="fg"><div class="fl">Wallet installé</div><select class="fi" id="c-wallet"><option value="">Aucun</option><option value="apple">Apple Wallet</option><option value="samsung">Samsung Wallet</option><option value="both">Apple + Samsung</option></select></div>
+  <div class="mfoot"><button class="mbtn s" onclick="cm('mo-c')">Annuler</button><button class="mbtn p" id="save-c-btn" onclick="saveClient()">Enregistrer</button></div>
+</div></div>
+
+<!-- MODAL CLIENT DETAIL -->
+<div class="ov h" id="mo-cd"><div class="mo" style="max-width:500px">
+  <div class="mot"><span id="cd-name">Client</span><button class="mc" onclick="cm('mo-cd')">×</button></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem">
+    <div style="background:var(--bg2);border-radius:var(--rm);padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;font-family:'Syne',sans-serif" id="cd-pts">—</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Points</div></div>
+    <div style="background:var(--bg2);border-radius:var(--rm);padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;font-family:'Syne',sans-serif" id="cd-vis">—</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Visites</div></div>
+    <div style="background:var(--bg2);border-radius:var(--rm);padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;font-family:'Syne',sans-serif" id="cd-tier">—</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Niveau</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem">
+    <input class="fi" type="number" id="pay-c-amt" placeholder="Montant achat (€)" style="flex:1" min="0.01">
+    <button class="mbtn p" style="padding:11px 14px;border-radius:var(--rm);font-size:12px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;border:none;white-space:nowrap;min-height:50px" onclick="payFromDetail()">+ Points via achat €</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem">
+    <input class="fi" type="number" id="man-pts" placeholder="Ajust. manuel (±pts)" style="flex:1">
+    <input class="fi" id="man-reason" placeholder="Motif" style="flex:1">
+    <button class="mbtn s" style="padding:11px 14px;border-radius:var(--rm);font-size:12px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;border:.5px solid var(--border);min-height:50px" onclick="manPts()">Appliquer</button>
+  </div>
+  <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Transactions récentes</div>
+  <div style="max-height:200px;overflow-y:auto" id="cd-txns"></div>
+  <div style="font-size:11px;color:var(--txt2);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.05em;font-weight:500">Utiliser une récompense</div>
+  <div id="cd-rewards" style="max-height:180px;overflow-y:auto;margin-bottom:6px"><div style="font-size:12px;color:var(--txt3)">Chargement...</div></div>
+  <div class="mfoot">
+    <button class="mbtn s" onclick="cm('mo-cd');openEdit(cdId)">Modifier</button>
+    <button class="mbtn s" style="color:var(--red)" onclick="delClient(cdId)">Supprimer</button>
+    <button class="mbtn p" onclick="cm('mo-cd')">Fermer</button>
+  </div>
+</div></div>
+
+<!-- MODAL REWARD -->
+<div class="ov h" id="mo-r"><div class="mo">
+  <div class="mot"><span>Nouvelle récompense</span><button class="mc" onclick="cm('mo-r')">×</button></div>
+  <div class="frow"><div class="fg"><div class="fl">Nom *</div><input class="fi" id="r-name" placeholder="Café offert"></div><div class="fg"><div class="fl">Emoji</div><input class="fi" id="r-emoji" placeholder="☕" style="text-align:center;font-size:20px"></div></div>
+  <div class="frow"><div class="fg"><div class="fl">Points requis *</div><input class="fi" id="r-pts" type="number" placeholder="200" min="1"></div><div class="fg"><div class="fl">Valeur (€)</div><input class="fi" id="r-val" type="number" placeholder="2.50" step=".01"></div></div>
+  <div class="fg"><div class="fl">Niveau minimum</div><select class="fi" id="r-tier"><option value="">Tous</option><option>Silver</option><option>Gold</option><option>Platinum</option></select></div>
+  <div class="mfoot"><button class="mbtn s" onclick="cm('mo-r')">Annuler</button><button class="mbtn p" id="save-r-btn" onclick="saveRwd()">Créer</button></div>
+</div></div>
+
+<!-- MODAL PAY SELECT -->
+<div class="ov h" id="mo-pay"><div class="mo">
+  <div class="mot"><span id="pay-title">Sélectionner le client</span><button class="mc" onclick="cm('mo-pay')">×</button></div>
+  <div style="font-size:13px;color:var(--txt2);margin-bottom:1rem" id="pay-sub"></div>
+  <input class="fi" id="pay-s" placeholder="Rechercher..." oninput="renderPaySel()" style="margin-bottom:10px">
+  <div style="max-height:280px;overflow-y:auto" id="pay-list"></div>
+  <div class="mfoot"><button class="mbtn s" onclick="cm('mo-pay')">Annuler</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<div id="m-footer-placeholder"></div>
+
+<script>
+const SB_URL='https://qqcfmbpixdeiczobqnqa.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2ZtYnBpeGRlaWN6b2JxbnFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MjMxMDMsImV4cCI6MjA5MDM5OTEwM30.qTQvfalYS-V39M37BJdMQbXeMJBJTuzM44RMzoqmW5I';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+let mid=null,mData=null,_clients=[],_txns=[],_rewards=[];
+let cardColor='#1C1C1E',payAmt=0,cdId=null;
+
+async function init(){
+  const raw=sessionStorage.getItem('los_merchant_sess');
+  if(!raw){window.location.href='index.html';return;}
+  try{mData=JSON.parse(raw);mid=mData.id;}catch{window.location.href='index.html';return;}
+  document.getElementById('nshop').textContent=mData.shopName;
+  document.getElementById('iph-app').textContent='Carte Fidélité · '+mData.shopName;
+  await loadCardSettings();
+  await renderAll();
+}
+
+async function loadCardSettings(){
+  const{data:m}=await sb.from('merchants').select('*').eq('id',mid).maybeSingle();
+  if(!m)return;
+  mData={...mData,...{shopName:m.shop_name,ptsPerEuro:m.pts_per_euro||10,cardColor:m.card_color||'#1C1C1E'}};
+  document.getElementById('nshop').textContent=m.shop_name;
+  document.getElementById('w-name').value=m.shop_name;
+  document.getElementById('w-pts').value=m.pts_per_euro||10;
+  document.getElementById('w-first').value=m.first_reward||200;
+  document.getElementById('w-valid').value=m.validity||12;
+  if(m.card_color){cardColor=m.card_color;document.getElementById('prv-a').style.background=m.card_color;document.getElementById('prv-s').style.background=m.card_color;}
+  document.getElementById('w-pts-min').value=m.pts_min||1;
+  document.getElementById('w-pts-max').value=m.pts_max||5000;
+  mData.ptsMin=m.pts_min||1;mData.ptsMax=m.pts_max||5000;
+  updatePrev();generateQR();
+}
+
+async function renderAll(){
+  const[r1,r2,r3]=await Promise.all([
+    sb.from('clients').select('*').eq('merchant_id',mid).order('join_date',{ascending:false}),
+    sb.from('transactions').select('*').eq('merchant_id',mid).order('created_at',{ascending:false}),
+    sb.from('rewards').select('*').eq('merchant_id',mid)
+  ]);
+  _clients=r1.data||[];_txns=r2.data||[];_rewards=r3.data||[];
+  renderDashboard();renderClients();renderRewards();renderNotifHist();renderAudience();renderCaisse();
+}
+
+function renderDashboard(){
+  const pts=_txns.filter(t=>t.type==='earn').reduce((s,t)=>s+(t.points||0),0);
+  const wals=_clients.filter(c=>(c.wallet||[]).length>0).length;
+  const used=_rewards.reduce((s,r)=>s+(r.usage_count||0),0);
+  document.getElementById('k-c').textContent=_clients.length;
+  document.getElementById('k-p').textContent=pts>=1000?(pts/1000).toFixed(1)+'k':pts;
+  document.getElementById('k-w').textContent=wals;
+  document.getElementById('k-r').textContent=used;
+  // Chart
+  const bars=document.getElementById('chart');bars.innerHTML='';
+  const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const now=new Date();const counts=Array(7).fill(0);
+  _clients.forEach(c=>{if(!c.join_date)return;const d=Math.floor((now-new Date(c.join_date))/86400000);if(d>=0&&d<7)counts[6-d]++;});
+  const disp=counts.every(x=>x===0)?[3,5,2,8,6,11,9]:counts;
+  const mx=Math.max(...disp,1);
+  const today=new Date().getDay();
+  const dl=Array.from({length:7},(_,i)=>days[(today-6+i+7)%7]);
+  disp.forEach((v,i)=>{const h=Math.max(4,Math.round(v/mx*100));bars.innerHTML+=`<div class="bw"><div class="bar${i===6?' cur':''}" style="height:${h}px" title="${v}"></div><div class="bl">${dl[i]}</div></div>`;});
+  // Tiers
+  const te=document.getElementById('tier-chart');te.innerHTML='';
+  [{n:'Silver',c:'#888780'},{n:'Gold',c:'#C9933A'},{n:'Platinum',c:'#6B4FBF'}].forEach(t=>{
+    const cnt=_clients.filter(c=>c.tier===t.n).length;
+    const pct=_clients.length?Math.round(cnt/_clients.length*100):0;
+    te.innerHTML+=`<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${t.n}</span><span style="color:var(--txt2)">${cnt} · ${pct}%</span></div><div style="background:var(--bg3);border-radius:20px;height:8px;overflow:hidden"><div style="width:${pct}%;height:100%;border-radius:20px;background:${t.c}"></div></div></div>`;
+  });
+  // Recent
+  const rw=document.getElementById('recent-wrap');
+  if(!_clients.length){rw.innerHTML='<div class="empty">Aucun client. Ajoutez votre premier client dans l\'onglet Clients.</div>';return;}
+  rw.innerHTML=`<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Client</th><th>Niveau</th><th>Points</th><th>Wallet</th><th>Inscrit</th></tr></thead><tbody>${_clients.slice(0,5).map(cRowSimple).join('')}</tbody></table></div>`;
+}
+
+function cRowSimple(c){
+  const init=c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const tc={Gold:'tg',Silver:'ts',Platinum:'tp'}[c.tier]||'ts';
+  const wi=(c.wallet||[]).map(w=>`<div class="wic ${w==='apple'?'wa':'ws'}">${w==='apple'?'A':'S'}</div>`).join('');
+  const pct=Math.min(100,Math.round((c.points||0)/100));
+  return`<tr><td><div class="cc"><div class="av">${init}</div><div><div style="font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--txt3)">${c.email||c.phone||''}</div></div></div></td><td><span class="tb ${tc}">${c.tier}</span></td><td><div style="display:flex;align-items:center;gap:8px"><div class="pb"><div class="pbf" style="width:${pct}%"></div></div><span style="font-size:12px">${(c.points||0).toLocaleString('fr-FR')}</span></div></td><td><div class="wi">${wi||'<span style="font-size:11px;color:var(--txt3)">—</span>'}</div></td><td style="font-size:12px;color:var(--txt2)">${fd(c.created_at)}</td></tr>`;
+}
+
+function renderClients(){
+  const q=(document.getElementById('cs')?.value||'').toLowerCase();
+  const cf=document.getElementById('cf')?.value||'';
+  const cw=document.getElementById('cw')?.value||'';
+  let data=[..._clients];
+  if(q)data=data.filter(c=>c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q));
+  if(cf)data=data.filter(c=>c.tier===cf);
+  if(cw==='apple')data=data.filter(c=>(c.wallet||[]).includes('apple'));
+  else if(cw==='samsung')data=data.filter(c=>(c.wallet||[]).includes('samsung'));
+  else if(cw==='none')data=data.filter(c=>!(c.wallet||[]).length);
+  const wrap=document.getElementById('clients-wrap');
+  if(!data.length){wrap.innerHTML='<div class="empty">Aucun client trouvé.</div>';return;}
+  wrap.innerHTML=`<table class="tbl"><thead><tr><th>Client</th><th>Niveau</th><th>Points</th><th>Wallet</th><th>Dernière visite</th><th>Actions</th></tr></thead><tbody>${data.map(c=>{
+    const init=c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const tc={Gold:'tg',Silver:'ts',Platinum:'tp'}[c.tier]||'ts';
+    const wi=(c.wallet||[]).map(w=>`<div class="wic ${w==='apple'?'wa':'ws'}">${w==='apple'?'A':'S'}</div>`).join('');
+    const pct=Math.min(100,Math.round((c.points||0)/100));
+    // NOTE: password (c.pass) is intentionally NOT displayed here
+    return`<tr><td><div class="cc"><div class="av">${init}</div><div><div style="font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--txt3)">${c.phone||c.email||''}</div></div></div></td><td><span class="tb ${tc}">${c.tier}</span></td><td><div style="display:flex;align-items:center;gap:8px"><div class="pb"><div class="pbf" style="width:${pct}%"></div></div><span style="font-size:12px">${(c.points||0).toLocaleString('fr-FR')}</span></div></td><td><div class="wi">${wi||'<span style="font-size:11px;color:var(--txt3)">—</span>'}</div></td><td style="font-size:12px;color:var(--txt2)">${fd(c.last_visit)}</td><td><div style="display:flex;gap:4px;flex-wrap:wrap"><button class="ab" onclick="openDetail('${c.id}')">Détails</button><button class="ab" onclick="openEdit('${c.id}')">Modifier</button><button class="ab r" onclick="delClient('${c.id}')">Suppr.</button></div></td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+// CAISSE
+function processPay(){
+  const amt=parseFloat(document.getElementById('pay-amt').value);
+  if(!amt||amt<=0){toast('Entrez un montant valide','err');return;}
+  payAmt=amt;
+  document.getElementById('pay-title').textContent=`Paiement de ${amt.toFixed(2)}€`;
+  const ptsPerEuro=mData.ptsPerEuro||10;
+  document.getElementById('pay-sub').textContent=`Sélectionnez le client — il recevra ${Math.round(amt*ptsPerEuro)} pts`;
+  renderPaySel();
+  document.getElementById('mo-pay').classList.remove('h');
+}
+function renderPaySel(){
+  const q=(document.getElementById('pay-s')?.value||'').toLowerCase();
+  const data=_clients.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q));
+  document.getElementById('pay-list').innerHTML=data.length?data.map(c=>`<div onclick="selectPayClient('${c.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:var(--rm);cursor:pointer;margin-bottom:4px;background:var(--bg2);min-height:52px" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='var(--bg2)'"><div><div style="font-weight:500;font-size:13px">${c.name}</div><div style="font-size:11px;color:var(--txt2)">${c.email||c.phone||''}</div></div><div style="font-size:12px;font-weight:600;color:var(--gold)">${(c.points||0).toLocaleString('fr-FR')} pts</div></div>`).join(''):'<div style="font-size:12px;color:var(--txt3);padding:12px">Aucun client trouvé</div>';
+}
+async function selectPayClient(cid){
+  const ptsPerEuro=mData.ptsPerEuro||10;
+  const pts=Math.round(payAmt*ptsPerEuro);
+  await applyPts(cid,pts,'earn',`Achat ${payAmt.toFixed(2)}€`);
+  cm('mo-pay');document.getElementById('pay-amt').value='';
+  toast(`+${pts} pts crédités !`,'ok');
+}
+function renderCaisse(){
+  const tx=[..._txns].slice(0,15);
+  const el=document.getElementById('recent-txns');if(!el)return;
+  if(!tx.length){el.innerHTML='<div style="font-size:12px;color:var(--txt3)">Aucune transaction</div>';return;}
+  el.innerHTML=tx.map(t=>{
+    const c=_clients.find(x=>x.id===t.client_id);
+    return`<div class="txnr"><div class="txni" style="background:${t.type==='earn'?'var(--green-bg)':'var(--red-bg)'};color:${t.type==='earn'?'var(--green)':'var(--red)'};font-weight:700">${t.type==='earn'?'+':'−'}</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c?.name||'Client'}</div><div style="font-size:11px;color:var(--txt3)">${t.description||''}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-weight:600;color:${t.type==='earn'?'var(--green)':'var(--red)'}">${t.type==='earn'?'+':'−'}${t.points} pts</div><div style="font-size:10px;color:var(--txt3)">${fd(t.created_at)}</div></div></div>`;
+  }).join('');
+  renderPaySearch();
+}
+function renderPaySearch(){
+  const q=(document.getElementById('pay-search')?.value||'').toLowerCase();
+  const data=_clients.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q));
+  const el=document.getElementById('pay-clients-list');if(!el)return;
+  el.innerHTML=data.map(c=>{
+    const init=c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--r);margin-bottom:6px;background:var(--bg);border:.5px solid var(--border);min-height:64px"><div class="av">${init}</div><div style="flex:1"><div style="font-weight:500;font-size:13px">${c.name}</div><div style="font-size:11px;color:var(--txt3)">${c.email||c.phone||''} · ${c.tier}</div></div><div style="font-size:12px;font-weight:600;color:var(--gold);min-width:60px;text-align:right">${(c.points||0).toLocaleString('fr-FR')} pts</div><button class="ab" onclick="openDetail('${c.id}')" style="min-height:44px">+Points</button></div>`;
+  }).join('');
+}
+
+// WALLET
+function updatePrev(){
+  const n=document.getElementById('w-name').value||mData?.shopName||'—';
+  document.getElementById('wpb-a').textContent=n;document.getElementById('wpb-s').textContent=n;
+}
+function pickColor(el,color){document.querySelectorAll('.cs-w').forEach(c=>c.classList.remove('on'));el.classList.add('on');cardColor=color;document.getElementById('prv-a').style.background=color;document.getElementById('prv-s').style.background=color;}
+async function publishCard(){
+  const btn=document.getElementById('publish-btn');btn.disabled=true;btn.textContent='Publication...';
+  const name=document.getElementById('w-name').value.trim();
+  const pts=parseInt(document.getElementById('w-pts').value)||10;
+  const ptsMin=parseInt(document.getElementById('w-pts-min').value)||1;
+  const ptsMax=parseInt(document.getElementById('w-pts-max').value)||5000;
+  const{error}=await sb.from('merchants').update({shop_name:name,pts_per_euro:pts,card_color:cardColor,first_reward:parseInt(document.getElementById('w-first').value)||200,validity:parseInt(document.getElementById('w-valid').value)||12,pts_min:ptsMin,pts_max:ptsMax}).eq('id',mid);
+  btn.disabled=false;btn.textContent='Publier la carte';
+  if(error){toast('Erreur: '+error.message,'err');return;}
+  mData.shopName=name;mData.ptsPerEuro=pts;mData.cardColor=cardColor;
+  document.getElementById('nshop').textContent=name;updatePrev();generateQR();
+  await addLog('ok','Carte Wallet mise à jour');toast('Carte publiée !','ok');
+}
+function generateQR(){
+  const el=document.getElementById('qr-c');el.innerHTML='';
+  const url=`https://loyaltyos1.vercel.app/index.html?m=${mid}`;
+  document.getElementById('qr-link').textContent=url;
+  try{new QRCode(el,{text:url,width:140,height:140,colorDark:'#1a1a18',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){el.innerHTML='<div style="width:140px;height:140px;background:var(--bg2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--txt3)">QR code</div>';}
+}
+function dlQR(){const c=document.querySelector('#qr-c canvas');if(!c){toast('Publiez d\'abord la carte','err');return;}const a=document.createElement('a');a.href=c.toDataURL();a.download='qr_fidelite.png';a.click();toast('QR téléchargé','ok');}
+
+// CLIENTS CRUD
+function openAdd(){
+  document.getElementById('mc-t').textContent='Nouveau client';
+  document.getElementById('ce-id').value='';
+  ['c-name','c-email','c-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-pts').value='0';document.getElementById('c-tier').value='Silver';
+  document.getElementById('c-pass').value='';document.getElementById('c-wallet').value='';
+  document.getElementById('mo-c').classList.remove('h');
+}
+function openEdit(id){
+  const c=_clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('mc-t').textContent='Modifier le client';
+  document.getElementById('ce-id').value=id;
+  document.getElementById('c-name').value=c.name;document.getElementById('c-email').value=c.email||'';
+  document.getElementById('c-phone').value=c.phone||'';document.getElementById('c-pts').value=c.points||0;
+  document.getElementById('c-tier').value=c.tier||'Silver';
+  document.getElementById('c-pass').value=''; // Never pre-fill password
+  const wv=(c.wallet||[]).includes('apple')&&(c.wallet||[]).includes('samsung')?'both':(c.wallet||[])[0]||'';
+  document.getElementById('c-wallet').value=wv;
+  document.getElementById('mo-c').classList.remove('h');
+}
+async function saveClient(){
+  const name=document.getElementById('c-name').value.trim();
+  if(!name){toast('Nom obligatoire','err');return;}
+  const email=document.getElementById('c-email').value.trim().toLowerCase();
+  const editId=document.getElementById('ce-id').value;
+  const btn=document.getElementById('save-c-btn');btn.disabled=true;btn.textContent='Enregistrement...';
+  const wv=document.getElementById('c-wallet').value;
+  const wallet=wv==='both'?['apple','samsung']:wv?[wv]:[];
+  const pts=parseInt(document.getElementById('c-pts').value)||0;
+  const pass=document.getElementById('c-pass').value;
+  try{
+    const obj={name,email,phone:document.getElementById('c-phone').value.trim(),points:pts,tier:document.getElementById('c-tier').value,wallet};
+    if(pass){
+      if(pass.length<6){toast('Mot de passe trop court (6 min)','err');btn.disabled=false;btn.textContent='Enregistrer';return;}
+      obj.pass=pass;
+    }
+    if(editId){
+      const{error}=await sb.from('clients').update(obj).eq('id',editId);
+      if(error){toast('Erreur: '+error.message,'err');btn.disabled=false;btn.textContent='Enregistrer';return;}
+      toast('Client mis à jour','ok');
+    }else{
+      // Check duplicate: same email + same merchant
+      if(email){
+        const{data:dup}=await sb.from('clients').select('id').eq('email',email).eq('merchant_id',mid).maybeSingle();
+        if(dup){toast('Un client avec cet email existe déjà pour ce commerce.','err');btn.disabled=false;btn.textContent='Enregistrer';return;}
+      }
+      if(!pass){toast('Mot de passe obligatoire pour les nouveaux clients','err');btn.disabled=false;btn.textContent='Enregistrer';return;}
+      const{error}=await sb.from('clients').insert({...obj,merchant_id:mid,visits:1});
+      if(error){toast('Erreur: '+error.message,'err');btn.disabled=false;btn.textContent='Enregistrer';return;}
+      await addLog('ok',`Nouveau client ajouté : "${name}"`);toast('Client ajouté !','ok');
+    }
+  }catch(e){toast('Erreur: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Enregistrer';cm('mo-c');await renderAll();
+}
+async function openDetail(id){
+  cdId=id;const c=_clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('cd-name').textContent=c.name;
+  document.getElementById('cd-pts').textContent=(c.points||0).toLocaleString('fr-FR');
+  document.getElementById('cd-vis').textContent=c.visits||0;
+  document.getElementById('cd-tier').textContent=c.tier;
+  document.getElementById('pay-c-amt').value='';document.getElementById('man-pts').value='';document.getElementById('man-reason').value='';
+  const{data:txns}=await sb.from('transactions').select('*').eq('client_id',id).order('created_at',{ascending:false}).limit(15);
+  document.getElementById('cd-txns').innerHTML=(txns||[]).length?(txns).map(t=>`<div class="txnr"><div class="txni" style="background:${t.type==='earn'?'var(--green-bg)':'var(--red-bg)'};color:${t.type==='earn'?'var(--green)':'var(--red)'};font-weight:700">${t.type==='earn'?'+':'−'}</div><div style="flex:1"><div style="font-size:12px;font-weight:500">${t.description||'Transaction'}</div><div style="font-size:11px;color:var(--txt3)">${fd(t.created_at)}</div></div><div style="font-size:12px;font-weight:600;color:${t.type==='earn'?'var(--green)':'var(--red)'}">${t.type==='earn'?'+':'−'}${t.points} pts</div></div>`).join(''):'<div style="font-size:12px;color:var(--txt3)">Aucune transaction</div>';
+  document.getElementById('mo-cd').classList.remove('h');
+  loadClientRewards(id);
+}
+
+// Load rewards in client detail modal (merchant validates from caisse)
+async function loadClientRewards(clientId){
+  const c=_clients.find(x=>x.id===clientId);
+  const el=document.getElementById('cd-rewards');if(!el)return;
+  if(!c){el.innerHTML='';return;}
+  const pts=c.points||0;
+  const{data:rw}=await sb.from('rewards').select('*').eq('merchant_id',mid).eq('active',true).order('points');
+  if(!rw||!rw.length){el.innerHTML='<div style="font-size:12px;color:var(--txt3)">Aucune récompense configurée.</div>';return;}
+  el.innerHTML=rw.map(r=>{
+    const ok=pts>=r.points;
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--rm);background:var(--bg2);margin-bottom:6px;opacity:${ok?1:.5}">
+      <span style="font-size:18px">${r.emoji||'🎁'}</span>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">${r.name}</div><div style="font-size:11px;color:var(--gold)">${r.points.toLocaleString('fr-FR')} pts requis</div></div>
+      ${ok?`<button class="ab" onclick="redeemRewardForClient('${clientId}','${r.id}',${r.points},'${r.name.replace(/'/g,"\'")}','${c.name.replace(/'/g,"\'")}')" style="min-height:36px;color:var(--green);border-color:var(--green-bg);background:var(--green-bg)">Utiliser</button>`:`<span style="font-size:11px;color:var(--txt3)">−${(r.points-pts).toLocaleString('fr-FR')} pts</span>`}
+    </div>`;
+  }).join('');
+}
+
+async function redeemRewardForClient(clientId,rewardId,pts,rewardName,clientName){
+  if(!confirm(`Utiliser "${rewardName}" pour ${clientName} (−${pts} pts) ?`))return;
+  await applyPts(clientId,pts,'redeem','Récompense : '+rewardName);
+  // Increment usage_count
+  const{data:r}=await sb.from('rewards').select('usage_count').eq('id',rewardId).maybeSingle();
+  await sb.from('rewards').update({usage_count:(r?.usage_count||0)+1}).eq('id',rewardId);
+  loadClientRewards(clientId);
+  toast('✓ "'+rewardName+'" utilisée !','ok');
+}
+async function payFromDetail(){
+  const amt=parseFloat(document.getElementById('pay-c-amt').value);
+  if(!amt||amt<=0){toast('Montant invalide','err');return;}
+  const pts=Math.round(amt*(mData.ptsPerEuro||10));
+  await applyPts(cdId,pts,'earn',`Achat ${amt.toFixed(2)}€`);
+  document.getElementById('pay-c-amt').value='';openDetail(cdId);
+}
+async function manPts(){
+  const pts=parseInt(document.getElementById('man-pts').value);
+  const reason=document.getElementById('man-reason').value.trim()||'Ajustement manuel';
+  if(!pts){toast('Valeur invalide','err');return;}
+  await applyPts(cdId,Math.abs(pts),pts>0?'earn':'redeem',reason);
+  document.getElementById('man-pts').value='';openDetail(cdId);
+}
+async function applyPts(cid,pts,type,desc){
+  const c=_clients.find(x=>x.id===cid);if(!c)return;
+  // Apply pts_min/pts_max limits for earn transactions
+  if(type==='earn'){
+    const mn=mData.ptsMin||1;const mx=mData.ptsMax||5000;
+    if(pts<mn)pts=mn;if(pts>mx)pts=mx;
+  }
+  const newPts=type==='earn'?(c.points||0)+pts:Math.max(0,(c.points||0)-pts);
+  // Tier based on LIFETIME earned points (never decreases)
+  const newTotalEarned=type==='earn'?(c.total_points_earned||0)+pts:(c.total_points_earned||0);
+  const nt=newTotalEarned>=5000?'Platinum':newTotalEarned>=1000?'Gold':'Silver';
+  const now=new Date().toISOString();
+  const updateObj={points:newPts,tier:nt,last_visit:now};
+  if(type==='earn'){updateObj.visits=(c.visits||0)+1;updateObj.total_points_earned=newTotalEarned;}
+  const{error}=await sb.from('clients').update(updateObj).eq('id',cid);
+  if(error){toast('Erreur: '+error.message,'err');return;}
+  await sb.from('transactions').insert({client_id:cid,merchant_id:mid,type,points:pts,description:desc});
+  toast(`${type==='earn'?'+':'−'}${pts} pts — ${desc}`,'ok');
+  await renderAll();if(document.getElementById('mo-cd').classList.contains('h')===false)openDetail(cid);
+}
+async function delClient(id){
+  cm('mo-cd');
+  const c=_clients.find(x=>x.id===id);
+  if(!confirm(`Supprimer "${c?.name}" ?`))return;
+  // Supprime uniquement la ligne de CE commerçant (le client garde ses autres cartes)
+  await sb.from('clients').delete().eq('id',id).eq('merchant_id',mid);
+  toast('Client supprimé');await renderAll();
+}
+async function exportCSV(){
+  if(!_clients.length){toast('Aucun client','err');return;}
+  const rows=[['Nom','Email','Téléphone','Niveau','Points','Visites','Wallet','Inscrit']];
+  _clients.forEach(c=>rows.push([c.name,c.email||'',c.phone||'',c.tier,c.points||0,c.visits||0,(c.wallet||[]).join('+'),c.join_date?new Date(c.join_date).toLocaleDateString('fr-FR'):'']));
+  const blob=new Blob(['\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clients_loyaltyos.csv';a.click();toast('CSV exporté','ok');
+}
+
+// NOTIFICATIONS
+function selTpl(el,title,body){document.querySelectorAll('.tpl').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById('n-title').value=title;document.getElementById('n-body').value=body;updNPrev();}
+function updNPrev(){document.getElementById('n-prev-t').textContent=document.getElementById('n-title').value;document.getElementById('n-prev-b').textContent=document.getElementById('n-body').value;}
+function renderAudience(){
+  const cl=_clients;const now=new Date();
+  const segs=[{c:cl.length,l:'Tous les clients'},{c:cl.filter(c=>c.tier==='Gold'||c.tier==='Platinum').length,l:'Gold et Platinum'},{c:cl.filter(c=>c.last_visit&&(now-new Date(c.last_visit))/86400000>30).length,l:'Inactifs 30j'},{c:cl.filter(c=>c.join_date&&(now-new Date(c.join_date))/86400000<7).length,l:'Nouveaux (7j)'},{c:Math.floor(cl.length*.12),l:'Récompense dispo'},{c:Math.floor(cl.length*.07),l:'Points expirent'}];
+  const el=document.getElementById('aud-grid');if(!el)return;
+  el.innerHTML=segs.map((s,i)=>`<div class="audc${i===0?' on':''}" onclick="selAud(this)"><div class="audv">${s.c}</div><div class="audl">${s.l}</div></div>`).join('');
+}
+function selAud(el){document.querySelectorAll('.audc').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+async function sendNotif(){
+  const title=document.getElementById('n-title').value.trim();
+  const body=document.getElementById('n-body').value.trim();
+  if(!title||!body){toast('Titre et message obligatoires','err');return;}
+  const aud=document.querySelector('.audc.on');
+  const count=parseInt(aud?.querySelector('.audv')?.textContent||0);
+  const lbl=aud?.querySelector('.audl')?.textContent||'Tous';
+  const{error}=await sb.from('notifications').insert({merchant_id:mid,title,body,audience:lbl,recipient_count:count});
+  if(error){toast('Erreur: '+error.message,'err');return;}
+  await addLog('info',`Notification "${title}" envoyée à ${count} clients`);
+  renderNotifHist();toast(`Notification envoyée à ${count} clients !`,'ok');
+}
+async function renderNotifHist(){
+  const{data:notifs}=await sb.from('notifications').select('*').eq('merchant_id',mid).order('sent_at',{ascending:false}).limit(6);
+  const el=document.getElementById('n-hist');if(!el)return;
+  el.innerHTML=(notifs||[]).length?(notifs).map(n=>`<div class="nhr"><div class="nhi">📣</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.title}</div><div style="font-size:11px;color:var(--txt3)">${n.audience} · ${fd(n.sent_at)}</div></div><div style="font-size:12px;color:var(--accent);font-weight:500">${n.recipient_count} envois</div></div>`).join(''):'<div style="font-size:12px;color:var(--txt3)">Aucun envoi</div>';
+}
+
+// REWARDS
+function renderRewards(){
+  const rw=_rewards;
+  const active=rw.filter(r=>r.active).length;
+  const used=rw.reduce((s,r)=>s+(r.usage_count||0),0);
+  const val=rw.reduce((s,r)=>s+(r.usage_count||0)*(r.value||0),0);
+  const rate=_clients.length?Math.round(used/_clients.length*100):0;
+  document.getElementById('rk-a').textContent=active;document.getElementById('rk-u').textContent=used;
+  document.getElementById('rk-v').textContent=val.toFixed(0)+'€';document.getElementById('rk-r').textContent=rate+'%';
+  const el=document.getElementById('rewards-list');if(!el)return;
+  el.innerHTML=rw.length?rw.map(r=>`<div class="rwr"><div class="rwe">${r.emoji||'🎁'}</div><div class="rwi"><div class="rwn">${r.name}</div><div class="rwm">Utilisé ${r.usage_count||0} fois${r.value?' · '+r.value+'€':''}${r.tier_required?' · '+r.tier_required+' requis':''}</div></div><div class="rwp">${(r.points||0).toLocaleString('fr-FR')} pts</div><div class="rwtg${r.active?' on':''}" onclick="toggleRwd('${r.id}',this)"></div><button class="ab r" onclick="delRwd('${r.id}')" style="margin-left:4px">Suppr.</button></div>`).join(''):'<div class="empty">Aucune récompense. Créez-en une !</div>';
+}
+async function toggleRwd(id,el){
+  const r=_rewards.find(x=>x.id===id);if(!r)return;
+  const{error}=await sb.from('rewards').update({active:!r.active}).eq('id',id);
+  if(error){toast('Erreur','err');return;}
+  el.classList.toggle('on');_rewards=_rewards.map(x=>x.id===id?{...x,active:!x.active}:x);renderRewards();
+}
+async function delRwd(id){if(!confirm('Supprimer cette récompense ?'))return;const{error}=await sb.from('rewards').delete().eq('id',id);if(error){toast('Erreur','err');return;}toast('Supprimée');await renderAll();}
+function openRwd(){['r-name','r-emoji','r-pts','r-val'].forEach(id=>document.getElementById(id).value='');document.getElementById('r-tier').value='';document.getElementById('mo-r').classList.remove('h');}
+async function saveRwd(){
+  const name=document.getElementById('r-name').value.trim();
+  const pts=parseInt(document.getElementById('r-pts').value);
+  if(!name||!pts||pts<1){toast('Nom et points obligatoires','err');return;}
+  const btn=document.getElementById('save-r-btn');btn.disabled=true;btn.textContent='Création...';
+  const{error}=await sb.from('rewards').insert({merchant_id:mid,emoji:document.getElementById('r-emoji').value||'🎁',name,points:pts,value:parseFloat(document.getElementById('r-val').value)||0,tier_required:document.getElementById('r-tier').value,active:true,usage_count:0});
+  btn.disabled=false;btn.textContent='Créer';
+  if(error){toast('Erreur: '+error.message,'err');return;}
+  cm('mo-r');await renderAll();await addLog('ok',`Récompense "${name}" créée`);toast('Récompense créée !','ok');
+}
+
+// UTILS
+async function addLog(type,msg){try{await sb.from('logs').insert({type,message:msg,merchant_id:mid});}catch(e){}}
+function sw(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('on',['dashboard','caisse','wallet','clients','notifs','rewards'][i]===id));
+  document.getElementById('p-'+id).classList.add('on');
+  if(id==='caisse')renderCaisse();
+  if(id==='clients')renderClients();
+}
+function cm(id){document.getElementById(id).classList.add('h');}
+function doLogout(){sessionStorage.removeItem('los_merchant_sess');window.location.href='index.html';}
+function fd(iso){if(!iso)return'—';const d=new Date(iso),now=new Date(),diff=Math.floor((now-d)/86400000);if(diff===0)return"Aujourd'hui";if(diff===1)return'Hier';return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast on'+(type?' '+type:'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3000);}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.add('h');}));
+
+init();
+// Render footer
+(function(){
+  const fp=document.getElementById('m-footer-placeholder');
+  if(fp)fp.outerHTML='<div class="m-footer"><a href="#" onclick="document.getElementById(\'m-mo-cgu\').classList.remove(\'h\')">CGU</a><a href="#" onclick="document.getElementById(\'m-mo-contact\').classList.remove(\'h\')">Contact</a><span>© 2025 LoyaltyOS</span></div>';
+})();
+</script>
+<style>
+.m-footer{text-align:center;padding:16px;font-size:11px;color:var(--txt3)}
+.m-footer a{color:var(--txt3);text-decoration:none;margin:0 8px}
+.m-footer a:hover{color:var(--txt2)}
+/* MODAL LEGAL */
+.leg-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:flex-end;justify-content:center}
+.leg-ov.h{display:none}
+.leg-sh{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;padding:1.5rem}
+.leg-sh h2{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:1rem;display:flex;justify-content:space-between}
+.leg-sh p{font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:8px}
+.leg-sh h3{font-size:13px;font-weight:700;margin:12px 0 4px;color:var(--txt)}
+.leg-mc{background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer}
+</style>
+<div class="leg-ov h" id="m-mo-cgu" onclick="if(event.target===this)this.classList.add('h')">
+  <div class="leg-sh">
+    <h2><span>Conditions d'utilisation</span><button class="leg-mc" onclick="document.getElementById('m-mo-cgu').classList.add('h')">×</button></h2>
+    <h3>1. Objet</h3><p>Les présentes conditions régissent l'utilisation du service LoyaltyOS par les commerçants.</p>
+    <h3>2. Responsabilités</h3><p>Le commerçant est responsable des données de ses clients et de leur utilisation du programme de fidélité.</p>
+    <h3>3. Données personnelles (RGPD)</h3><p>Les données clients collectées sont utilisées uniquement dans le cadre du programme de fidélité. Le commerçant s'engage à répondre aux demandes d'effacement de ses clients.</p>
+    <p style="margin-top:16px;font-style:italic;color:var(--txt3)">— Texte à compléter par un professionnel juridique.</p>
+  </div>
+</div>
+<div class="leg-ov h" id="m-mo-contact" onclick="if(event.target===this)this.classList.add('h')">
+  <div class="leg-sh">
+    <h2><span>Contact LoyaltyOS</span><button class="leg-mc" onclick="document.getElementById('m-mo-contact').classList.add('h')">×</button></h2>
+    <p style="color:var(--txt)">📧 Email : à compléter</p>
+    <p style="color:var(--txt)">🌐 Site : loyaltyos1.vercel.app</p>
+  </div>
+</div>
+</body>
+</html>
